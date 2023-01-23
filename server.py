@@ -5,8 +5,19 @@ from flask import Flask, render_template
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 from json import dump, load
+from datetime import date, datetime
 
 app = Flask(__name__)
+
+
+def get_current_week():
+    page = requests.get("https://ssau.ru/rasp?groupId=531873998&selectedWeek=1&selectedWeekday=1")
+    soup = BeautifulSoup(page.text, "html.parser")
+    first_date = soup.find("div", class_="week-nav-current_date").get_text(strip=True)
+    first_date = datetime.strptime(first_date, '%d.%m.%Y').date()
+    current_date = date.today()
+    difference = current_date - first_date
+    return int(difference.days/7)
 
 
 def get_schedule(url):
@@ -121,4 +132,5 @@ if __name__ == "__main__":
     # get_schedule(url)
     # get_group_list()
     # get_staff_list()
+    get_current_week()
     app.run(debug=True)
