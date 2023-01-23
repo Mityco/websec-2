@@ -1,9 +1,10 @@
 import re
 import requests
 
-from flask import Flask
+from flask import Flask, render_template
 from bs4 import BeautifulSoup
 from tqdm import tqdm
+from json import dump, load
 
 app = Flask(__name__)
 
@@ -19,8 +20,24 @@ def get_schedule(url):
     lessons_list = []
     for index in range(7, len(items)):
         temp = items[index].get_text(strip=True, separator="|")
-        lessons_list.append(temp.split("|"))
-
+        cell = temp.split("|")
+        staff = items[index].find("a", class_="caption-text")
+        if staff is None:
+            lessons_list.append(cell)
+            continue
+        staff_link = staff.get("href")
+        if len(cell) == 3:
+            lesson = {"title": cell[0], "place": cell[1], "staff_name": cell[2], "staff_id": staff_link}
+            lessons_list.append(lesson)
+        elif 3 < len(cell) < 8:
+            lesson = {"title": cell[0], "place": cell[1], "staff_name": cell[2], "staff_id": staff_link,
+                      "groups": cell[3:]}
+            lessons_list.append(lesson)
+        elif len(cell) == 8:
+            lesson = [{"title": cell[0], "place": cell[1], "staff_name": cell[2], "staff_id": staff_link,
+                       "groups": cell[3]}, {"title": cell[4], "place": cell[5], "staff_name": cell[6],
+                                            "staff_id": staff_link, "groups": cell[7]}]
+            lessons_list.append(lesson)
     week = int(soup.find("span", class_="h3-text").get_text().strip(" неделя"))
     return week, owner, lessons_list
 
@@ -32,6 +49,7 @@ def get_group_list():
     faculties = {}
     for faculty in faculties_raw:
         temp = faculty.get("href")
+        id = re.search(r'\d{9}', temp).group()
         temp = temp.strip("1")
         groups = {}
         for i in range(1, 7):
@@ -40,8 +58,10 @@ def get_group_list():
             groups_raw = faculty_soup.findAll("a", class_="group-catalog__group")
             for group in groups_raw:
                 groups[group.text] = group.get("href")
-        faculties[faculty.text] = groups
-    return faculties
+        faculty_data = {"id": id, "groups": groups}
+        faculties[faculty.text] = faculty_data
+    with open("groups.json", "w", encoding='utf-8') as file:
+        dump(faculties, file, indent=4, ensure_ascii=False)
 
 
 def get_staff_list():
@@ -64,12 +84,41 @@ def get_staff_list():
                 staff_list[name] = str(f"/rasp?staffId={id}")
             else:
                 continue
-        # https://ssau.ru/rasp?staffId=
+    with open("staff.json", "w", encoding='utf-8') as file:
+        dump(staff_list, file, indent=4, ensure_ascii=False)
+
+
+@app.route('/')
+def index():
+    with open("groups.json", "r", encoding='utf-8') as file:
+        data = load(file)
+    faculties = []
+    for item in data.keys():
+        id = data[item]["id"]
+        faculties.append({"name": item, "link": f"/faculty/{id}"})
+    return render_template("faculties.html", faculties=faculties)
+
+
+@app.route('/faculty/<id>')
+def faculty(id):
+    with open("groups.json", "r", encoding='utf-8') as file:
+        data = load(file)
+    groups_raw = {}
+    for item in data.keys():
+        if data[item]["id"] == id:
+            groups_raw = data[item]["groups"]
+            break
+        else:
+            continue
+    groups = []
+    for i in groups_raw.keys():
+        groups.append({"number": i, "link": groups_raw[i]})
+    return render_template("groups.html", groups=groups, faculty=item)
 
 
 if __name__ == "__main__":
     url = "https://ssau.ru/rasp?groupId=531873998&selectedWeek=18&selectedWeekday=1"
     # get_schedule(url)
     # get_group_list()
-    get_staff_list()
-    # app.run(debug=True)
+    # get_staff_list()
+    app.run(debug=True)

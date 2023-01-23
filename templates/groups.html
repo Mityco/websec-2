@@ -1,0 +1,15 @@
+{% extends 'base.html '%}
+
+{% block title %}
+    Группы
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <h1>{{faculty}}</h1>
+    <h2> Список групп </h2>
+    {% for group in groups %}
+    <p><a href="{{group.link}}">{{group.number}}</a></p>
+    {% endfor %}
+</div>
+{% endblock %}
