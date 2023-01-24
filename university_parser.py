@@ -17,6 +17,26 @@ def get_current_week():
     return int(difference.days/7)
 
 
+def get_lesson(lesson_raw):
+    name = lesson_raw.find("div", class_="body-text").get_text(strip=True, separator=" ")
+    place = lesson_raw.find("div", class_="schedule__place").get_text(strip=True, separator=" ")
+    staff_raw = lesson_raw.find("div", class_="schedule__teacher")
+    staff = []
+    staff_link = []
+    if staff_raw is not None:
+        temp = staff_raw.findAll("a")
+        for i in range(len(temp)):
+            staff.append(temp[i].get_text(strip=True, separator=" "))
+            staff_link.append(temp[i].get("href"))
+    groups_raw = lesson_raw.findAll("a", class_="schedule__group")
+    groups = []
+    if len(groups_raw) != 0:
+        for i in range(len(groups_raw)):
+            group = groups_raw[i].get_text(strip=True, separator=" ")
+            groups.append(group)
+    return {"name": name, "place": place, "staff": staff, "staff_link": staff_link, "groups": groups}
+
+
 def get_schedule(url):
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
@@ -24,30 +44,39 @@ def get_schedule(url):
     owner_raw = soup.find("h1")
     owner = owner_raw.text.strip("Расписание, ")
 
-    items = soup.findAll("div", class_="schedule__item")
-    lessons_list = []
-    for index in range(7, len(items)):
-        temp = items[index].get_text(strip=True, separator="|")
-        cell = temp.split("|")
-        staff = items[index].find("a", class_="caption-text")
-        if staff is None:
-            lessons_list.append(cell)
-            continue
-        staff_link = staff.get("href")
-        if len(cell) == 3:
-            lesson = {"title": cell[0], "place": cell[1], "staff_name": cell[2], "staff_id": staff_link}
-            lessons_list.append(lesson)
-        elif 3 < len(cell) < 8:
-            lesson = {"title": cell[0], "place": cell[1], "staff_name": cell[2], "staff_id": staff_link,
-                      "groups": cell[3:]}
-            lessons_list.append(lesson)
-        elif len(cell) == 8:
-            lesson = [{"title": cell[0], "place": cell[1], "staff_name": cell[2], "staff_id": staff_link,
-                       "groups": cell[3]}, {"title": cell[4], "place": cell[5], "staff_name": cell[6],
-                                            "staff_id": staff_link, "groups": cell[7]}]
-            lessons_list.append(lesson)
     week = int(soup.find("span", class_="h3-text").get_text().strip(" неделя"))
-    return week, owner, lessons_list
+
+    timetable_head_raw = soup.findAll("div", class_="schedule__head")
+    timetable_head = [timetable_head_raw[0].get_text(strip=True)]
+    for i in range(1, len(timetable_head_raw)):
+        weekday = timetable_head_raw[i].find("div", class_="schedule__head-weekday").get_text(strip=True)
+        weekday_date = timetable_head_raw[i].find("div", class_="schedule__head-date").get_text(strip=True)
+        timetable_head.append({"weekday": weekday, "date": weekday_date})
+    timetable_time_raw = soup.findAll("div", class_="schedule__time")
+    timetable_time = []
+    for time_cell in timetable_time_raw:
+        timespan = time_cell.findAll("div", class_="schedule__time-item")
+        str_timespan = str()
+        for item in timespan:
+            str_timespan += f"{item.get_text(strip=True)}\n"
+        timetable_time.append(str_timespan)
+    schedule_raw = soup.findAll("div", class_="schedule__item")
+    schedule = []
+    for index in range(7, len(schedule_raw)):
+        cell = schedule_raw[index]
+        lesson = cell.findAll("div", class_="schedule__lesson")
+        if len(lesson) == 0:
+            schedule.append("")
+        else:
+            lesson_cell = []
+            for item in lesson:
+                lesson_cell.append(get_lesson(item))
+            schedule.append(lesson_cell)
+    final_schedule = [timetable_head]
+    for i in range(5):
+        final_schedule.append([timetable_time[i], schedule[i*6:(i+1)*6]])
+    with open("schedule.json", "w", encoding='utf-8') as file:
+        dump({f"{owner} - {week}": final_schedule}, file, indent=4, ensure_ascii=False)
 
 
 def get_group_list():
