@@ -2,7 +2,6 @@ import re
 import requests
 
 from bs4 import BeautifulSoup
-from tqdm import tqdm
 from datetime import date, datetime
 from json import dump
 
@@ -105,7 +104,7 @@ def get_group_list():
 
 def get_staff_list():
     staff_list = {}
-    for i in tqdm(range(1, 114)):
+    for i in range(1, 114):
         page = requests.get(f"https://ssau.ru/staff?page={i}&letter=0")
         soup = BeautifulSoup(page.text, "html.parser")
         staff_raw = soup.findAll("li", class_="list-group-item list-group-item-action")
@@ -115,11 +114,7 @@ def get_staff_list():
             id = re.search(r'\d{7,9}', id)
             if id is not None:
                 id = id.group()
-                name = temp.get_text().split(" ")
-                if len(name) == 3:
-                    name = str(f"{name[0]} {name[1][0]}.{name[2][0]}.")
-                else:
-                    name = str(f"{name[0]} {name[1][0]}.")
+                name = temp.get_text(strip=True)
                 staff_list[name] = str(f"/rasp?staffId={id}")
             else:
                 continue

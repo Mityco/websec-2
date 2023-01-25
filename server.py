@@ -1,3 +1,5 @@
+import re
+
 from university_parser import get_current_week, get_schedule, get_group_list, get_staff_list
 from flask import Flask, render_template, request
 from json import load
@@ -6,8 +8,34 @@ from json import load
 app = Flask(__name__)
 
 
+def search(req):
+    found_items = {}
+    if req and req != "":
+        if len(re.findall(r"\d{4}-\d{6}[A-Z]", req)) != 0:
+            with open("groups.json", "r", encoding='utf-8') as file:
+                data = load(file)
+            for faculty, items in data.items():
+                for number, link in data[faculty]["groups"].items():
+                    if number.strip() == req:
+                        found_items[number] = link
+        else:
+            with open("staff.json", "r", encoding='utf-8') as file:
+                data = load(file)
+            for name, link in data.items():
+                if name.strip() == req:
+                    found_items[name] = link
+    return found_items
+
+
 @app.route('/')
 def main_page():
+    search_request = request.args.get('searchRequest')
+    if search_request and search_request != "":
+        found = search(search_request)
+        if found != {}:
+            return render_template("found_items.html", found=found)
+        else:
+            return render_template("found_items.html", found=found)
     with open("groups.json", "r", encoding='utf-8') as file:
         data = load(file)
     faculties = []
@@ -19,6 +47,13 @@ def main_page():
 
 @app.route('/faculty/<int:id>')
 def faculty_page(id):
+    search_request = request.args.get('searchRequest')
+    if search_request and search_request != "":
+        found = search(search_request)
+        if found != {}:
+            return render_template("found_items.html", found=found)
+        else:
+            return render_template("found_items.html", found=found)
     with open("groups.json", "r", encoding='utf-8') as file:
         data = load(file)
     groups_raw = {}
@@ -36,6 +71,13 @@ def faculty_page(id):
 
 @app.route('/rasp')
 def schedule_page():
+    search_request = request.args.get('searchRequest')
+    if search_request and search_request != "":
+        found = search(search_request)
+        if found != {}:
+            return render_template("found_items.html", found=found)
+        else:
+            return render_template("found_items.html", found=found)
     selected_week = request.args.get('selectedWeek')
     group_id = request.args.get('groupId')
     staff_id = request.args.get('staffId')
@@ -62,9 +104,6 @@ def schedule_page():
 
 
 if __name__ == "__main__":
-    # get_group_list()
-    # get_staff_list()
-    # url = f"https://ssau.ru/rasp?groupId=531873998&selectedWeek=18&selectedWeekday=1"
-    # url = f" https://ssau.ru/rasp?groupId=802492112&selectedWeek=18&selectedWeekday=1"
-    # get_schedule(url)
+    get_group_list()
+    get_staff_list()
     app.run(debug=True)

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block links %}
+    <link rel="stylesheet" href="static/style.css">
+{% endblock %}
+
+{% block title %}
+    Результаты поиска
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <h2> Резульататы поиска </h2>
+    {% if found %}
+    {% for name, link in found.items() %}
+    <p>
+        <a class="faculty-link" href="{{link}}">{{name}}</a>
+    </p>
+    {% endfor %}
+    {% else %}
+    <p>По вашему запросу ничего не найдено</p>
+    {% endif %}
+</div>
+{% endblock %}

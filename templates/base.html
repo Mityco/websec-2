@@ -11,6 +11,15 @@
     <title>{% block title %}{% endblock %}</title>
 </head>
 <body>
+    <div class="container">
+        <h1>Расписание</h1>
+        <form role="form">
+            <div class="form-group">
+                <input type="search" class="form-control" name="searchRequest" placeholder="Поиск"/>
+                <p class="help-block">Введите номер группы или имя преподавателя</p>
+            </div>
+        </form>
+    </div>
     {% block body%}
     {% endblock %}
 </body>
