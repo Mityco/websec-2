@@ -44,10 +44,8 @@ def get_schedule(url):
     owner_raw = soup.find("h1")
     owner = owner_raw.text.strip("Расписание, ")
 
-    week = int(soup.find("span", class_="h3-text").get_text().strip(" неделя"))
-
     timetable_head_raw = soup.findAll("div", class_="schedule__head")
-    timetable_head = [timetable_head_raw[0].get_text(strip=True)]
+    timetable_head = []
     for i in range(1, len(timetable_head_raw)):
         weekday = timetable_head_raw[i].find("div", class_="schedule__head-weekday").get_text(strip=True)
         weekday_date = timetable_head_raw[i].find("div", class_="schedule__head-date").get_text(strip=True)
@@ -72,11 +70,15 @@ def get_schedule(url):
             for item in lesson:
                 lesson_cell.append(get_lesson(item))
             schedule.append(lesson_cell)
-    final_schedule = [timetable_head]
-    for i in range(5):
-        final_schedule.append([timetable_time[i], schedule[i*6:(i+1)*6]])
+    final_schedule = {"head": timetable_head, "rows": []}
+    for i in timetable_time:
+        final_schedule["rows"].append({"timespan": i})
+    for i in range(len(timetable_time)):
+        final_schedule['rows'][i]['items'] = []
+        for j in range(len(timetable_head)):
+            final_schedule['rows'][i]['items'].append(schedule[i * len(timetable_head) + j])
     with open("schedule.json", "w", encoding='utf-8') as file:
-        dump({f"{owner} - {week}": final_schedule}, file, indent=4, ensure_ascii=False)
+        dump({f"{owner}": final_schedule}, file, indent=4, ensure_ascii=False)
 
 
 def get_group_list():

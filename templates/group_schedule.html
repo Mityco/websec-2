@@ -1,0 +1,47 @@
+{% extends 'base.html '%}
+
+{% block title %}
+    Расписание
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <h1>{{group}}</h1>
+    <div>
+        <a href="{{data.weeks_links[0]}}"> &lt {{data.weeks[0]}} неделя</a>
+        <div>{{data.weeks[1]}} неделя</div>
+        <a href="{{data.weeks_links[1]}}"> {{data.weeks[2]}} неделя &gt </a>
+    </div>
+    <table>
+        <tr>
+            <td> Время </td>
+            {% for cell in schedule.head %}
+            <td>
+                <p>{{cell.weekday}}</p>
+                <p>{{cell.date}}</p>
+            </td>
+            {% endfor %}
+        </tr>
+        {% for row in schedule.rows %}
+        <tr>
+            <td>{{ row.timespan }}</td>
+            {% for item in row['items'] %}
+            <td>
+                {% for cell in item %}
+                {% if cell.name %}
+                <div>
+                    <div> {{cell.name}} </div>
+                    <div> {{cell.place}} </div>
+                    {% for teacher in cell.staff %}
+                        <a>{{teacher}}</a>
+                    {% endfor %}
+                {% endif %}
+                </div>
+                {% endfor %}
+            </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}
