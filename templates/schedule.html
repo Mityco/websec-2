@@ -1,0 +1,55 @@
+{% extends 'base.html'%}
+
+{% block links %}
+    <link rel="stylesheet" href="../static/style.css">
+{% endblock %}
+
+{% block title %}
+    Расписание
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <h1>{{group}}</h1>
+    <div class="week-nav container">
+        <table class="table table-borderless">
+            <tr>
+                <td align="left"><a class="table-link" href="{{data.weeks_links[0]}}"> &lt {{data.weeks[0]}} неделя</a></td>
+                <td align="center"><div>{{data.weeks[1]}} неделя</div></td>
+                <td align="right"><a class="table-link" href="{{data.weeks_links[1]}}"> {{data.weeks[2]}} неделя &gt </a></td>
+            </tr>
+        </table>
+    </div>
+    <table class="schedule-table">
+        <tr>
+            <th class="table-th"> Время </th>
+            {% for cell in schedule.head %}
+            <th class="table-th">
+                <p>{{cell.weekday}}</p>
+                <p>{{cell.date}}</p>
+            </th>
+            {% endfor %}
+        </tr>
+        {% for row in schedule.rows %}
+        <tr>
+            <td class="table-td">{{ row.timespan }}</td>
+            {% for item in row['items'] %}
+            <td class="table-td">
+                {% for cell in item %}
+                {% if cell.name %}
+                <div>
+                    <div> {{cell.name}} </div>
+                    <div> {{cell.place}} </div>
+                    {% for teacher in cell.staff %}
+                        <a class="table-link" href="{{cell.staff_link[loop.index0]}}">{{teacher}}</a>
+                    {% endfor %}
+                {% endif %}
+                </div>
+                {% endfor %}
+            </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

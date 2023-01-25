@@ -42,7 +42,7 @@ def get_schedule(url):
     soup = BeautifulSoup(page.text, "html.parser")
 
     owner_raw = soup.find("h1")
-    owner = owner_raw.text.strip("Расписание, ")
+    owner = owner_raw.get_text(strip=True).strip("Расписание, ")
 
     timetable_head_raw = soup.findAll("div", class_="schedule__head")
     timetable_head = []
@@ -98,7 +98,7 @@ def get_group_list():
             for group in groups_raw:
                 groups[group.text] = group.get("href")
         faculty_data = {"id": id, "groups": groups}
-        faculties[faculty.text] = faculty_data
+        faculties[faculty.get_text(strip=True)] = faculty_data
     with open("groups.json", "w", encoding='utf-8') as file:
         dump(faculties, file, indent=4, ensure_ascii=False)
 

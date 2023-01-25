@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 
 @app.route('/')
-def index():
+def main_page():
     with open("groups.json", "r", encoding='utf-8') as file:
         data = load(file)
     faculties = []
@@ -18,7 +18,7 @@ def index():
 
 
 @app.route('/faculty/<int:id>')
-def faculty(id):
+def faculty_page(id):
     with open("groups.json", "r", encoding='utf-8') as file:
         data = load(file)
     groups_raw = {}
@@ -35,22 +35,30 @@ def faculty(id):
 
 
 @app.route('/rasp')
-def group_default_schedule():
-    id = request.args.get('groupId')
+def schedule_page():
     selected_week = request.args.get('selectedWeek')
+    group_id = request.args.get('groupId')
+    staff_id = request.args.get('staffId')
+
     if selected_week and selected_week != "":
         week = int(selected_week)
     else:
         week = get_current_week()
-    url = f"https://ssau.ru/rasp?groupId={id}&selectedWeek={week}&selectedWeekday=1"
+
+    if group_id and group_id != "":
+        url = f"https://ssau.ru/rasp?groupId={group_id}&selectedWeek={week}&selectedWeekday=1"
+        type = "groupId"
+    elif staff_id and staff_id != "":
+        url = f"https://ssau.ru/rasp?staffId={staff_id}&selectedWeek={week}&selectedWeekday=1"
+        type = "staffId"
     get_schedule(url)
     with open("schedule.json", "r", encoding='utf-8') as file:
         data = load(file)
-    group = list(data.keys())[0]
+    owner = list(data.keys())[0]
     data["weeks"] = [week - 1, week, week + 1]
-    data["weeks_links"] = [f"/rasp?groupId={id}&selectedWeek={week - 1}&selectedWeekday=1",
-                           f"/rasp?groupId={id}&selectedWeek={week + 1}&selectedWeekday=1"]
-    return render_template("group_schedule.html", group=group, schedule=data[group], data=data)
+    data["weeks_links"] = [f"/rasp?{type}={group_id}&selectedWeek={week - 1}&selectedWeekday=1",
+                           f"/rasp?{type}={group_id}&selectedWeek={week + 1}&selectedWeekday=1"]
+    return render_template("schedule.html", owner=owner, schedule=data[owner], data=data)
 
 
 if __name__ == "__main__":

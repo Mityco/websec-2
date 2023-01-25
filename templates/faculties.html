@@ -1,4 +1,8 @@
-{% extends 'base.html '%}
+{% extends 'base.html' %}
+
+{% block links %}
+    <link rel="stylesheet" href="static/style.css">
+{% endblock %}
 
 {% block title %}
     Институты и факультеты
@@ -9,7 +13,7 @@
     <h1> Институты и факультеты </h1>
     {% for faculty in faculties %}
     <p>
-        <a href="{{faculty.link}}">{{faculty.name}}</a>
+        <a class="faculty-link" href="{{faculty.link}}">{{faculty.name}}</a>
     </p>
     {% endfor %}
 </div>
